@@ -45,8 +45,11 @@ Building from source (Windows):
 ```
 make windows
 ```
-If building was ok, you can find executable file in `bin` subdirectory.  
+If building was successfully, you can find executable file in `bin` subdirectory.  
 Run the program:
 ```
 mpiexec -n 7 ./bin/mpi-kmeans ./datasets/iris/data.txt 150 4 3 ./datasets/iris/new_result.txt ./datasets/iris/res.txt
+```
+```
+mpiexec --oversubscribe -n 16 ./bin/mpi-kmeans ./datasets/iris/data.txt 150 4 3 ./datasets/iris/new_result.txt ./datasets/iris/res.txt
 ```
