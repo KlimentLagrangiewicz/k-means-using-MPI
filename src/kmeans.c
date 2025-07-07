@@ -135,19 +135,8 @@ double* getStartCores(const double* const x, const int n, const int m, const int
 
 
 
-void MPI_Distrdata(const double* const x, const int m, const int numOfProc, const int perProc, int **y_in, double **x_in) {
-	if (numOfProc == 1 || perProc == 0) {
-		*y_in = NULL;
-		*x_in = NULL;
-		return;
-	}
-	double *localX = (double*)malloc(perProc * m * sizeof(double));
-	MPI_Scatter(x, perProc * m, MPI_DOUBLE, localX, perProc * m, MPI_DOUBLE, 0, MPI_COMM_WORLD);
-	
-	int *localY = (int*)malloc(perProc * sizeof(int));
-	
-	*y_in = localY;
-	*x_in = localX;
+void MPI_Distrdata(const double* const x, const int m, const int numOfProc, const int perProc, double* const x_local) {
+	if (numOfProc > 1 && perProc != 0) MPI_Scatter(x, perProc * m, MPI_DOUBLE, x_local, perProc * m, MPI_DOUBLE, 0, MPI_COMM_WORLD);
 }
 
 void detStartPartition(const double* const x, const double* const c, int* const y, int* const nums, int n, const int m, const int k) {
@@ -290,24 +279,22 @@ int* kmeans_serial(const double* const x, const int n, const int m, const int k)
 
 
 int* MPI_Kmeans(const double* const x, const int n, const int m, const int k) {
-	double *x_local;
-	int *y_local;
 	int pid, numOfProc;
 	MPI_Comm_size(MPI_COMM_WORLD, &numOfProc);
 	MPI_Comm_rank(MPI_COMM_WORLD, &pid);
 	int perProc = n / numOfProc;
 	if (perProc == 0 || numOfProc == 1) {
-		int *y = pid == 0 ? kmeans_serial(x, n, m, k) : (int*)malloc(n * sizeof(int));
-		
-		MPI_Bcast(y, n, MPI_INT, 0, MPI_COMM_WORLD);
+		int *y = pid == 0 ? kmeans_serial(x, n, m, k) : NULL;
 		return y;
-	}	
-	MPI_Distrdata(x, m, numOfProc, perProc, &y_local, &x_local);
+	}
+	double *x_local = (double*)malloc(perProc * m * sizeof(double));
+	int *y_local = (int*)malloc(perProc * sizeof(int));
+	MPI_Distrdata(x, m, numOfProc, perProc, x_local);
 	
 	double *c = pid == 0 ? getStartCores(x, n, m, k) : (double*)malloc(k * m * sizeof(double));
 	MPI_Bcast(c, k * m, MPI_DOUBLE, 0, MPI_COMM_WORLD);
 	
-	int *y = (int*)malloc(n * sizeof(int));
+	int *y = pid == 0 ? (int*)malloc(n * sizeof(int)) : NULL;
 	int *nums = (int*)malloc(k * sizeof(int));
 	MPI_Detstartpartition(x_local, y_local, x, y, c, nums, n, m, k, numOfProc, perProc);
 	
@@ -319,6 +306,5 @@ int* MPI_Kmeans(const double* const x, const int n, const int m, const int k) {
 	
 	MPI_Gather(y_local, perProc, MPI_INT, y, perProc, MPI_INT, 0, MPI_COMM_WORLD);
 	free(y_local);
-	MPI_Bcast(y, n, MPI_INT, 0, MPI_COMM_WORLD);
 	return y;
 }

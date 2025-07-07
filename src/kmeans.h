@@ -15,7 +15,7 @@ void MPI_Scaling(double* const x, const int n, const int m);
 int getCluster(const double* const x, const double* const c, const int m, int k);
 char constr(const int *y, const int val, int s);
 double* getStartCores(const double* const x, const int n, const int m, const int k);
-void MPI_Distrdata(const double* const x, const int m, const int numOfProc, const int perProc, int **y_in, double **x_in);
+void MPI_Distrdata(const double* const x, const int m, const int numOfProc, const int perProc, double* const x_local);
 void detStartPartition(const double* const x, const double* const c, int* const y, int* const nums, int n, const int m, const int k);
 void MPI_Detstartpartition(const double* const x_local, int* const y_local, const double* const x_global, int* const y_global, const double* const c, int* const nums, const int n, const int m, const int k, const int numOfProc, const int perProc);
 void sumCores(const double* const x, double* const c, const int* const y, const int n, const int m);
